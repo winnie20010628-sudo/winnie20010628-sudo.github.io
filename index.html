@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <title>工作日誌</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 強制瀏覽器不要用緩存，開發階段很有用 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -131,7 +135,8 @@
 
         <div class="input-area">
             <textarea id="content" placeholder="請輸入工作內容..."></textarea>
-            <button onclick="addRecord()">添加記錄</button>
+            <!-- 將 onclick 移到 JS 中監聽，更規範 -->
+            <button id="addBtn">添加記錄</button>
         </div>
 
         <div class="log-list" id="logList">
@@ -140,179 +145,220 @@
     </div>
 
     <script>
-        // DOMContentLoaded 事件確保頁面加載完成後再執行
-        document.addEventListener('DOMContentLoaded', function() {
-            // 使用 try-catch 包裹，防止 localStorage 报错导致脚本停止
-            try {
-                loadData();
-            } catch (e) {
-                console.error("載入數據時發生錯誤:", e);
-                document.getElementById('logList').innerHTML = '<div style="padding: 20px; color: #d00;">無法載入數據 (可能是瀏覽器隱私設置限制)。</div>';
-            }
-        });
+        // 這是核心修改：將整個腳本包裹在一個立即執行函數中，防止變量污染
+        (function() {
+            // 等待 DOM 加載完成
+            document.addEventListener('DOMContentLoaded', function() {
+                // 1. 設置按鈕點擊事件
+                document.getElementById('addBtn').addEventListener('click', addRecord);
 
-        function getCurrentDate() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0'); 
-            const day = String(now.getDate()).padStart(2, '0'); 
-            return ${year}-${month}-${day};
-        }
-
-        function getCurrentTime() {
-            const now = new Date();
-            return now.toLocaleTimeString('zh-HK', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: false
-            });
-        }
-
-        function addRecord() {
-            const contentInput = document.getElementById('content');
-            if (contentInput.value.trim() === '') {
-                alert('請先輸入一些內容！');
-                return;
-            }
-
-            const record = {
-                date: getCurrentDate(),
-                time: getCurrentTime(),
-                content: contentInput.value
-            };
-
-            // 确保 addRecordToDOM 函数存在
-            addRecordToDOM(record);
-            
-            // 保存数据
-            try {
-                saveData();
-            } catch (e) {
-                console.error("保存數據失敗:", e);
-            }
-            
-            contentInput.value = '';
-        }
-
-        function addRecordToDOM(record) {
-            const logList = document.getElementById('logList');
-            
-            // 清除默认的“暂无记录”提示
-            if (logList.children.length === 1 && logList.querySelector('.no-record')) {
-                logList.innerHTML = '';
-            }
-
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'log-item';
-
-            itemDiv.innerHTML = `
-                <div class="date-tag" onclick="toggleContent(this)" ondblclick="editDate(this)">
-                    ${record.date}
-                </div>
-                <div class="content-panel">
-                    <input type="text" class="time-box" value="${record.time}" ondblclick="makeEditable(this)">
-                    <textarea class="note-box" rows="5" ondblclick="makeEditable(this)">${record.content}</textarea>
-                    <div class="delete-btn">
-                        <button class="btn-danger btn-small" onclick="deleteRecord(this)">刪除</button>
-                    </div>
-                </div>
-            `;
-
-            logList.insertBefore(itemDiv, logList.firstChild);
-        }
-
-        function toggleContent(dateElement) {
-            if (document.activeElement.classList && document.activeElement.classList.contains('date-tag-input')) {
-                return;
-            }
-            const panel = dateElement.parentNode.querySelector('.content-panel');
-            panel.style.display = panel.style.display === "flex" ? "none" : "flex";
-        }
-
-        function makeEditable(element) {
-            element.focus();
-            element.select();
-            element.onblur = function() {
-                // 尝试保存，即使失败也不中断
-                try { saveData(); } catch (e) {}
-            };
-        }
-
-        function editDate(element) {
-            event.stopPropagation();
-            const originalText = element.innerText;
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.className = 'date-tag-input';
-            input.value = originalText;
-
-            element.replaceWith(input);
-            input.focus();
-            input.select();
-
-            function saveDate() {
-                input.removeEventListener('blur', saveDate);
-                const newValue = input.value.trim() || originalText;
-                input.replaceWith(element);
-                element.innerText = newValue;
-                try { saveData(); } catch (e) {}
-            }
-
-            input.addEventListener('blur', saveDate);
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') saveDate();
-            });
-        }
-
-        function deleteRecord(button) {
-            if (confirm('確定要刪除這條記錄嗎？')) {
-                const item = button.closest('.log-item');
-                item.remove();
-                try { saveData(); } catch (e) {}
-            }
-        }
-
-        // --- 核心修改點：增加 try-catch 防止 localStorage 报错 ---
-        function saveData() {
-            try {
-                const logList = document.getElementById('logList');
-                const items = logList.querySelectorAll('.log-item');
-                
-                const data = Array.from(items).map(item => {
-                    return {
-                        date: item.querySelector('.date-tag').innerText,
-                        time: item.querySelector('.time-box').value,
-                        content: item.querySelector('.note-box').value
-                    };
-                });
-
-                // 尝试写入 localStorage
-                localStorage.setItem('workLogData', JSON.stringify(data));
-            } catch (e) {
-                console.warn("無法保存到 localStorage:", e);
-                // 这里可以添加备用方案，比如提示用户
-            }
-        }
-
-        function loadData() {
-            try {
-                const logList = document.getElementById('logList');
-                // 尝试读取
-                const savedData = localStorage.getItem('workLogData');
-                
-                if (savedData) {
-                    const data = JSON.parse(savedData);
-                    data.forEach(record => {
-                        addRecordToDOM(record);
-                    });
-                } else {
-                    logList.innerHTML = '<div class="no-record" style="padding: 20px; color: #888; text-align: center;">暫無記錄</div>';
+                // 2. 嘗試加載數據
+                try {
+                    loadData();
+                } catch (e) {
+                    console.error("【致命錯誤】數據加載失敗:", e);
+                    showError("應用啟動失敗，請刷新頁面重試。");
                 }
-            } catch (e) {
-                console.error("載入數據失敗:", e);
-                document.getElementById('logList').innerHTML = '<div style="padding: 20px; color: #d00;">數據載入失敗。</div>';
+            });
+
+            // --- 工具函數 ---
+            function showError(msg) {
+                const logList = document.getElementById('logList');
+                logList.innerHTML = <div style="color: red; padding: 10px;">${msg}</div>;
             }
-        }
+
+            // --- 數據相關 ---
+            function saveData() {
+                try {
+                    const logList = document.getElementById('logList');
+                    const items = logList.querySelectorAll('.log-item');
+                    
+                    // 如果沒有記錄，存儲空數組
+                    if (items.length === 0) {
+                        localStorage.setItem('workLogData', '[]');
+                        return;
+                    }
+
+                    const data = Array.from(items).map(item => {
+                        return {
+                            date: item.querySelector('.date-tag').innerText,
+                            time: item.querySelector('.time-box').value,
+                            content: item.querySelector('.note-box').value
+                        };
+                    });
+
+                    // 寫入 localStorage
+                    localStorage.setItem('workLogData', JSON.stringify(data));
+                } catch (e) {
+                    // 在這裡，如果出現 QuotaExceededError 或其他錯誤，我們只在控制台打印，不報警給用戶
+                    console.warn("【警告】數據保存失敗 (可能存儲空間已滿或被瀏覽器阻止):", e);
+                    // 注意：這一行很重要，即使保存失敗，也不要讓程序崩潰
+                }
+            }
+
+            function loadData() {
+                try {
+                    const logList = document.getElementById('logList');
+                    const savedData = localStorage.getItem('workLogData');
+
+                    // 情況1：沒有保存過的數據
+                    if (!savedData || savedData === 'undefined' || savedData === 'null') {
+                        logList.innerHTML = '<div class="no-record" style="padding: 20px; color: #888; text-align: center;">暫無記錄，請添加一條新記錄吧！</div>';
+                        return;
+                    }
+
+                    // 情況2：有數據，嘗試解析
+                    const data = JSON.parse(savedData);
+                    
+                    if (data.length === 0) {
+                        logList.innerHTML = '<div class="no-record" style="padding: 20px; color: #888; text-align: center;">暫無記錄</div>';
+                    } else {
+                        data.forEach(record => {
+                            addRecordToDOM(record);
+                        });
+                    }
+                } catch (e) {
+                    console.error("【錯誤】數據解析失敗:", e);
+                    document.getElementById('logList').innerHTML = '<div style="padding: 20px; color: #d00; text-align: center;">數據加載失敗，可能是格式錯誤。</div>';
+                }
+            }
+
+            // --- 業務邏輯 ---
+            function getCurrentDate() {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0'); 
+                const day = String(now.getDate()).padStart(2, '0'); 
+                return ${year}-${month}-${day};
+            }
+
+            function getCurrentTime() {
+                const now = new Date();
+                return now.toLocaleTimeString('zh-HK', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: false
+                });
+            }
+
+            function addRecord() {
+                const contentInput = document.getElementById('content');
+                if (!contentInput || contentInput.value.trim() === '') {
+                    alert('請先輸入一些內容！');
+                    return;
+                }
+
+                const record = {
+                    date: getCurrentDate(),
+                    time: getCurrentTime(),
+                    content: contentInput.value
+                };
+
+                // 添加到頁面
+                addRecordToDOM(record);
+                
+                // 清空輸入框
+                contentInput.value = '';
+                
+                // 保存（包裹在內部）
+                saveData();
+            }
+
+            function addRecordToDOM(record) {
+                const logList = document.getElementById('logList');
+                
+                // 如果是第一條記錄且存在提示文字，先清除
+                const firstChild = logList.firstElementChild;
+                if (firstChild && firstChild.classList.contains('no-record')) {
+                    logList.innerHTML = '';
+                }
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'log-item';
+
+                itemDiv.innerHTML = `
+                    <div class="date-tag" onclick="toggleContent(this)" ondblclick="editDate(this)">
+                        ${record.date}
+                    </div>
+                    <div class="content-panel">
+                        <input type="text" class="time-box" value="${record.time}" ondblclick="makeEditable(this)">
+                        <textarea class="note-box" rows="5" ondblclick="makeEditable(this)">${record.content}</textarea>
+                        <div class="delete-btn">
+                            <button class="btn-danger btn-small" onclick="deleteRecord(this)">刪除</button>
+                        </div>
+                    </div>
+                `;
+
+                logList.insertBefore(itemDiv, logList.firstChild);
+            }
+
+            // 全局函數：必須掛載到 window 上，否則 HTML 中的 onclick 找不到
+            window.toggleContent = function(dateElement) {
+                if (!dateElement) return;
+                // 防止在編輯狀態下觸發
+                if (document.activeElement && document.activeElement.classList && 
+                    document.activeElement.classList.contains('date-tag-input')) {
+                    return;
+                }
+                const panel = dateElement.parentNode.querySelector('.content-panel');
+                if (panel) {
+                    panel.style.display = panel.style.display === "flex" ? "none" : "flex";
+                }
+            };
+
+            window.makeEditable = function(element) {
+                if (element) {
+                    element.focus();
+                    element.select();
+                    element.onblur = function() {
+                        saveData();
+                    };
+                }
+            };
+
+            window.editDate = function(element) {
+                if (!element) return;
+                event.stopPropagation();
+                const originalText = element.innerText;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'date-tag-input';
+                input.value = originalText;
+
+                element.replaceWith(input);
+                input.focus();
+                input.select();
+
+                function saveDate() {
+                    // 移除監聽器避免內存洩漏
+                    input.removeEventListener('blur', saveDate);
+                    input.removeEventListener('keydown', handleKey);
+                    
+                    const newValue = input.value.trim() || originalText;
+                    input.replaceWith(element);
+                    element.innerText = newValue;
+                    saveData();
+                }
+
+                function handleKey(e) {
+                    if (e.key === 'Enter') saveDate();
+                }
+
+                input.addEventListener('blur', saveDate);
+                input.addEventListener('keydown', handleKey);
+            };
+
+            window.deleteRecord = function(button) {
+                if (confirm('確定要刪除這條記錄嗎？')) {
+                    const item = button.closest('.log-item');
+                    if (item) {
+                        item.remove();
+                        saveData();
+                    }
+                }
+            };
+
+        })(); // 立即執行函數結束
     </script>
 </body>
 </html>
