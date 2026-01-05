@@ -164,7 +164,7 @@
             // --- 工具函數 ---
             function showError(msg) {
                 const logList = document.getElementById('logList');
-                logList.innerHTML = <div style="color: red; padding: 10px;">${msg}</div>;
+                logList.innerHTML = '<div style="color: red; padding: 10px;">' + msg + '</div>';
             }
 
             // --- 數據相關 ---
@@ -229,7 +229,7 @@
                 const year = now.getFullYear();
                 const month = String(now.getMonth() + 1).padStart(2, '0'); 
                 const day = String(now.getDate()).padStart(2, '0'); 
-                return ${year}-${month}-${day};
+                return year + '-' + month + '-' + day;
             }
 
             function getCurrentTime() {
