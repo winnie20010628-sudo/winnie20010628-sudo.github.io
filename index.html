@@ -67,12 +67,11 @@
             color: white;
             font-size: 16px;
             text-align: center;
-            cursor: pointer; /* 單擊用於展開/收起 */
+            cursor: pointer;
             font-weight: bold;
             user-select: none;
         }
         
-        /* 使雙擊時的輸入框樣式與原本一致 */
         .date-tag-input {
             width: 100%;
             padding: 15px;
@@ -141,19 +140,22 @@
     </div>
 
     <script>
+        // DOMContentLoaded 事件確保頁面加載完成後再執行
         document.addEventListener('DOMContentLoaded', function() {
-            loadData();
+            // 使用 try-catch 包裹，防止 localStorage 报错导致脚本停止
+            try {
+                loadData();
+            } catch (e) {
+                console.error("載入數據時發生錯誤:", e);
+                document.getElementById('logList').innerHTML = '<div style="padding: 20px; color: #d00;">無法載入數據 (可能是瀏覽器隱私設置限制)。</div>';
+            }
         });
 
-        // --- 強制修改：日期格式改為 年-月-日 ---
         function getCurrentDate() {
             const now = new Date();
-            const year = now.getFullYear(); // 獲取完整年份
-            // getMonth() 從 0 開始，所以要 +1，並確保是兩位數
+            const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0'); 
             const day = String(now.getDate()).padStart(2, '0'); 
-            
-            // 手動拼接為 年-月-日
             return ${year}-${month}-${day};
         }
 
@@ -179,14 +181,23 @@
                 content: contentInput.value
             };
 
+            // 确保 addRecordToDOM 函数存在
             addRecordToDOM(record);
-            saveData();
+            
+            // 保存数据
+            try {
+                saveData();
+            } catch (e) {
+                console.error("保存數據失敗:", e);
+            }
+            
             contentInput.value = '';
         }
 
         function addRecordToDOM(record) {
             const logList = document.getElementById('logList');
             
+            // 清除默认的“暂无记录”提示
             if (logList.children.length === 1 && logList.querySelector('.no-record')) {
                 logList.innerHTML = '';
             }
@@ -194,7 +205,6 @@
             const itemDiv = document.createElement('div');
             itemDiv.className = 'log-item';
 
-            // 結構：日期標籤綁定單擊(切換)和雙擊(編輯)事件
             itemDiv.innerHTML = `
                 <div class="date-tag" onclick="toggleContent(this)" ondblclick="editDate(this)">
                     ${record.date}
@@ -211,116 +221,96 @@
             logList.insertBefore(itemDiv, logList.firstChild);
         }
 
-        // 切換展開/收起 (單擊事件)
         function toggleContent(dateElement) {
-            // 防止在編輯輸入框時觸發切換
-            if (document.activeElement.classList.contains('date-tag-input')) {
+            if (document.activeElement.classList && document.activeElement.classList.contains('date-tag-input')) {
                 return;
             }
-            
             const panel = dateElement.parentNode.querySelector('.content-panel');
-            if (getComputedStyle(panel).display === "none") {
-                panel.style.display = "flex";
-            } else {
-                panel.style.display = "none";
-            }
+            panel.style.display = panel.style.display === "flex" ? "none" : "flex";
         }
 
-        // 使元素可編輯的通用函數
         function makeEditable(element) {
-            // 聚焦並選擇所有文本
             element.focus();
             element.select();
-            
-            // 綁定失去焦點事件以保存
             element.onblur = function() {
-                saveData();
+                // 尝试保存，即使失败也不中断
+                try { saveData(); } catch (e) {}
             };
         }
 
-        // 專門處理日期編輯
         function editDate(element) {
-            // 防止觸發父級的單擊事件 (切換展開)
             event.stopPropagation();
-            
             const originalText = element.innerText;
-            
-            // 將 div 临时替换为 input
             const input = document.createElement('input');
             input.type = 'text';
             input.className = 'date-tag-input';
             input.value = originalText;
-            
-            // 替換節點
+
             element.replaceWith(input);
             input.focus();
             input.select();
-            
-            // 當失去焦點時保存
+
             function saveDate() {
-                // 移除事件監聽，防止重複觸發
                 input.removeEventListener('blur', saveDate);
-                input.removeEventListener('keydown', handleKey);
-                
-                const newValue = input.value.trim() || originalText; // 如果為空則還原
-                
-                // 將 input 換回 div
+                const newValue = input.value.trim() || originalText;
                 input.replaceWith(element);
                 element.innerText = newValue;
-                
-                saveData();
+                try { saveData(); } catch (e) {}
             }
-            
-            // 監聽失去焦點
+
             input.addEventListener('blur', saveDate);
-            
-            // 監聽按鍵 (按下 Enter 保存)
-            function handleKey(e) {
-                if (e.key === 'Enter') {
-                    saveDate();
-                }
-            }
-            input.addEventListener('keydown', handleKey);
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') saveDate();
+            });
         }
 
         function deleteRecord(button) {
             if (confirm('確定要刪除這條記錄嗎？')) {
                 const item = button.closest('.log-item');
                 item.remove();
-                saveData();
+                try { saveData(); } catch (e) {}
             }
         }
 
+        // --- 核心修改點：增加 try-catch 防止 localStorage 报错 ---
         function saveData() {
-            const logList = document.getElementById('logList');
-            const items = logList.querySelectorAll('.log-item');
-            
-            const data = Array.from(items).map(item => {
-                return {
-                    date: item.querySelector('.date-tag').innerText,
-                    time: item.querySelector('.time-box').value,
-                    content: item.querySelector('.note-box').value
-                };
-            });
+            try {
+                const logList = document.getElementById('logList');
+                const items = logList.querySelectorAll('.log-item');
+                
+                const data = Array.from(items).map(item => {
+                    return {
+                        date: item.querySelector('.date-tag').innerText,
+                        time: item.querySelector('.time-box').value,
+                        content: item.querySelector('.note-box').value
+                    };
+                });
 
-            localStorage.setItem('workLogData', JSON.stringify(data));
+                // 尝试写入 localStorage
+                localStorage.setItem('workLogData', JSON.stringify(data));
+            } catch (e) {
+                console.warn("無法保存到 localStorage:", e);
+                // 这里可以添加备用方案，比如提示用户
+            }
         }
 
         function loadData() {
-            const logList = document.getElementById('logList');
-            const savedData = localStorage.getItem('workLogData');
-            
-            if (savedData) {
-                try {
+            try {
+                const logList = document.getElementById('logList');
+                // 尝试读取
+                const savedData = localStorage.getItem('workLogData');
+                
+                if (savedData) {
                     const data = JSON.parse(savedData);
                     data.forEach(record => {
                         addRecordToDOM(record);
                     });
-                } catch (e) {
-                    logList.innerHTML = '<div class="no-record" style="padding: 20px; color: #888; text-align: center;">載入歷史記錄失敗</div>';
+                } else {
+                    logList.innerHTML = '<div class="no-record" style="padding: 20px; color: #888; text-align: center;">暫無記錄</div>';
                 }
-            } else {
-                logList.innerHTML = '<div class="no-record" style="padding: 20px; color: #888; text-align: center;">暫無記錄</div>';
+            } catch (e) {
+                console.error("載入數據失敗:", e);
+                document.getElementById('logList').innerHTML = '<div style="padding: 20px; color: #d00;">數據載入失敗。</div>';
             }
         }
     </script>
