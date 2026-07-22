@@ -1,4 +1,4 @@
-"""Launch Stock Watcher desktop app."""
+"""Double-click / CLI entry: python run.py"""
 from app.desktop import run
 
 if __name__ == "__main__":

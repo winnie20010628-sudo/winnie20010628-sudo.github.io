@@ -5,7 +5,7 @@ from urllib.parse import quote
 
 import httpx
 
-from .config import settings
+from .config import load_settings
 from .scanner import ScanResult
 from .storage import WatchTarget
 
@@ -25,14 +25,15 @@ def _format_message(target: WatchTarget, result: ScanResult) -> str:
 
 
 async def send_whatsapp(message: str) -> tuple[bool, str]:
-    if _twilio_configured():
-        return await _send_twilio(message)
+    settings = load_settings()
+    if _twilio_configured(settings):
+        return await _send_twilio(message, settings)
     if settings.whatsapp_phone and settings.whatsapp_api_key:
-        return await _send_callmebot(message)
-    return False, "尚未設定 WhatsApp（請在 .env 填寫 WHATSAPP_PHONE 與 WHATSAPP_API_KEY）"
+        return await _send_callmebot(message, settings)
+    return False, "尚未設定 WhatsApp（請喺應用程式按「WhatsApp 設定」）"
 
 
-def _twilio_configured() -> bool:
+def _twilio_configured(settings) -> bool:
     return bool(
         settings.twilio_account_sid
         and settings.twilio_auth_token
@@ -41,7 +42,7 @@ def _twilio_configured() -> bool:
     )
 
 
-async def _send_callmebot(message: str) -> tuple[bool, str]:
+async def _send_callmebot(message: str, settings) -> tuple[bool, str]:
     phone = settings.whatsapp_phone.lstrip("+").replace(" ", "")
     url = (
         "https://api.callmebot.com/whatsapp.php"
@@ -61,7 +62,7 @@ async def _send_callmebot(message: str) -> tuple[bool, str]:
         return False, f"CallMeBot 例外：{exc}"
 
 
-async def _send_twilio(message: str) -> tuple[bool, str]:
+async def _send_twilio(message: str, settings) -> tuple[bool, str]:
     url = (
         f"https://api.twilio.com/2010-04-01/Accounts/"
         f"{settings.twilio_account_sid}/Messages.json"

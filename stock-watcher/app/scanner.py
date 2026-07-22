@@ -8,7 +8,7 @@ from urllib.parse import urljoin, urlparse
 import httpx
 from bs4 import BeautifulSoup
 
-from .config import settings
+from .config import load_settings
 from .storage import WatchTarget
 
 
@@ -110,6 +110,7 @@ def _visible_text(soup: BeautifulSoup) -> str:
 
 
 async def fetch_html(url: str) -> str:
+    settings = load_settings()
     headers = {
         "User-Agent": settings.user_agent,
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
