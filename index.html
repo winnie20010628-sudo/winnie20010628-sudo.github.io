@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Winnie — 新項目</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #0c1a17;
+      --bg-mid: #143029;
+      --ink: #e8f2ee;
+      --muted: #9bb5ab;
+      --accent: #3ecf8e;
+      --accent-soft: rgba(62, 207, 142, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Noto Sans TC", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 60% at 15% 20%, rgba(62, 207, 142, 0.22), transparent 55%),
+        radial-gradient(ellipse 70% 50% at 90% 80%, rgba(40, 120, 95, 0.35), transparent 50%),
+        linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-mid) 55%, #0a1512 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.25rem;
+    }
+
+    main {
+      width: min(40rem, 100%);
+      opacity: 0;
+      transform: translateY(1.25rem);
+      animation: rise 0.9s ease forwards;
+    }
+
+    .brand {
+      font-family: Syne, "Noto Sans TC", sans-serif;
+      font-weight: 800;
+      font-size: clamp(2.75rem, 10vw, 4.5rem);
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 1.25rem;
+      background: linear-gradient(120deg, #ffffff 20%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    h1 {
+      font-family: Syne, "Noto Sans TC", sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.35rem, 4vw, 1.85rem);
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.7;
+      max-width: 32rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.85rem 1.35rem;
+      background: var(--accent);
+      color: #062018;
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      box-shadow: 0 0 0 0 var(--accent-soft);
+    }
+
+    .cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px var(--accent-soft);
+    }
+
+    .cta:active {
+      transform: translateY(0);
+    }
+
+    .glow {
+      position: fixed;
+      inset: auto -10% -20% auto;
+      width: min(28rem, 70vw);
+      height: min(28rem, 70vw);
+      background: radial-gradient(circle, rgba(62, 207, 142, 0.12), transparent 65%);
+      pointer-events: none;
+      animation: pulse 6s ease-in-out infinite;
+    }
+
+    @keyframes rise {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.55; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.08); }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+  <main>
+    <p class="brand">Winnie</p>
+    <h1>新項目起步頁</h1>
+    <p>呢個係 GitHub Pages 嘅新項目檔案。你可以喺呢度繼續加入內容、功能同設計。</p>
+    <button class="cta" type="button" id="startBtn">開始製作</button>
+  </main>
+  <script>
+    document.getElementById("startBtn").addEventListener("click", () => {
+      alert("項目檔已就緒！告訴我你想做咩功能，我可以幫你繼續完善。");
+    });
+  </script>
+</body>
+</html>
