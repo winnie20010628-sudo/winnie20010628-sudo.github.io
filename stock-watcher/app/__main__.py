@@ -1,0 +1,5 @@
+"""Launch Stock Watcher desktop app."""
+from app.desktop import run
+
+if __name__ == "__main__":
+    run()
