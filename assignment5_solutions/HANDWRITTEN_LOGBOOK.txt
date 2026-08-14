@@ -1,0 +1,388 @@
+CS405 Assignment 5 – Handwritten Logbook Version
+================================================
+Copy this into your logbook by hand. For Q4 and Q6,
+replace 21405678 with YOUR real student ID.
+
+
+------------------------------------------------------------
+SECTION 1 – Algorithm Efficiency
+Question 1
+------------------------------------------------------------
+
+Algorithm 1: calculate_iqr
+
+Time complexity: O(n)
+
+Justification:
+Let n = length of sorted_data.
+- Finding mid and calling median() only uses indexing → O(1)
+- Slicing sorted_data[:mid] and the upper half each copy
+  about n/2 elements → O(n)
+- No nested loops over the data
+Therefore overall time complexity is O(n).
+
+
+Algorithm 2: remove_duplicates
+
+Time complexity: O(n²)
+
+Justification:
+Let n = length of arr.
+- The for-loop runs n times
+- Inside the loop, "if num not in unique_list" checks up to
+  n items, which is O(n)
+- So total work = O(n) × O(n) = O(n²)
+
+
+Algorithm 3: cal_ops
+
+Time complexity: O(log N)
+
+Justification:
+Each loop sets i = i // 2, so i is halved every time.
+Starting from N, values go N, N/2, N/4, ... until 1.
+Number of iterations ≈ log₂(N).
+Each iteration does constant work.
+Therefore time complexity is O(log N).
+
+
+------------------------------------------------------------
+SECTION 2 – Recursion
+Question 2
+------------------------------------------------------------
+
+def sum_of_digits(n):
+    if n < 10:                 # base case
+        return n
+    else:                      # recursive case
+        return (n % 10) + sum_of_digits(n // 10)
+
+
+# Test
+print(sum_of_digits(12345))
+
+Working:
+sum_of_digits(12345)
+= 5 + sum_of_digits(1234)
+= 5 + 4 + sum_of_digits(123)
+= 5 + 4 + 3 + sum_of_digits(12)
+= 5 + 4 + 3 + 2 + sum_of_digits(1)
+= 5 + 4 + 3 + 2 + 1
+= 15
+
+Output: 15
+
+
+------------------------------------------------------------
+SECTION 3 – Stacks
+Question 3
+------------------------------------------------------------
+
+(a) 3 7 - 9 *
+
+Stack steps:
+  push 3
+  push 7
+  "-" → pop 7, pop 3 → 3-7 = -4 → push -4
+  push 9
+  "*" → pop 9, pop -4 → (-4)*9 = -36 → push -36
+
+Answer: -36
+
+
+(b) 7 3 8 * - 4 +
+
+Stack steps:
+  push 7
+  push 3
+  push 8
+  "*" → 3*8 = 24 → push 24
+  "-" → 7-24 = -17 → push -17
+  push 4
+  "+" → -17+4 = -13 → push -13
+
+Answer: -13
+
+
+(c) 12 12 * 4 - 2 /
+
+Stack steps:
+  push 12
+  push 12
+  "*" → 12*12 = 144 → push 144
+  push 4
+  "-" → 144-4 = 140 → push 140
+  push 2
+  "/" → 140/2 = 70 → push 70
+
+Answer: 70
+
+
+(d) Infix: 5 + 2 * 7 – 2
+Postfix: 5 2 7 * + 2 -
+
+(e) Infix: 7 + 2 * 9 / 5
+Postfix: 7 2 9 * 5 / +
+
+(f) Infix: (5 + 18) * (23 – 11) / (2 + 13)
+Postfix: 5 18 + 23 11 - * 2 13 + /
+
+
+------------------------------------------------------------
+SECTION 4 – Queues
+Question 4
+(Replace 21405678 with YOUR student ID)
+------------------------------------------------------------
+
+Student ID used: 21405678
+Digits: 2, 1, 4, 0, 5, 6, 7, 8
+
+Code:
+
+class Stack:
+    def __init__(self):
+        self.items = []
+    def is_empty(self):
+        return self.items == []
+    def push(self, item):
+        self.items.append(item)
+    def pop(self):
+        return self.items.pop()
+
+class Queue:
+    def __init__(self):
+        self.items = []
+    def is_empty(self):
+        return self.items == []
+    def enqueue(self, item):
+        self.items.append(item)
+    def dequeue(self):
+        return self.items.pop(0)
+
+
+student_id = "21405678"
+stack = Stack()
+queue = Queue()
+
+# Step 1: push each digit onto the stack
+for d in student_id:
+    stack.push(int(d))
+
+# Step 2: empty stack into queue
+while not stack.is_empty():
+    queue.enqueue(stack.pop())
+
+# Step 3: empty the queue
+while not queue.is_empty():
+    print(queue.dequeue(), end=" ")
+
+
+Steps shown:
+
+STEP 1 – Push onto Stack (bottom → top):
+  push 2 → [2]
+  push 1 → [2, 1]
+  push 4 → [2, 1, 4]
+  push 0 → [2, 1, 4, 0]
+  push 5 → [2, 1, 4, 0, 5]
+  push 6 → [2, 1, 4, 0, 5, 6]
+  push 7 → [2, 1, 4, 0, 5, 6, 7]
+  push 8 → [2, 1, 4, 0, 5, 6, 7, 8]
+
+STEP 2 – Pop Stack → Enqueue Queue:
+  pop 8 → Queue: [8]
+  pop 7 → Queue: [8, 7]
+  pop 6 → Queue: [8, 7, 6]
+  pop 5 → Queue: [8, 7, 6, 5]
+  pop 0 → Queue: [8, 7, 6, 5, 0]
+  pop 4 → Queue: [8, 7, 6, 5, 0, 4]
+  pop 1 → Queue: [8, 7, 6, 5, 0, 4, 1]
+  pop 2 → Queue: [8, 7, 6, 5, 0, 4, 1, 2]
+
+STEP 3 – Empty Queue (front → rear):
+  dequeue → 8, 7, 6, 5, 0, 4, 1, 2
+
+Final output: 8 7 6 5 0 4 1 2
+(Student ID digits in reverse order)
+
+
+------------------------------------------------------------
+SECTION 5 – Linked Lists
+Question 5
+------------------------------------------------------------
+
+class Node:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
+
+    def get_data(self):
+        return self.data
+
+    def get_next(self):
+        return self.next
+
+    def set_data(self, data):
+        self.data = data
+
+    def set_next(self, next_node):
+        self.next = next_node
+
+
+class UnorderedList:
+    def __init__(self):
+        self.head = None
+
+    def is_empty(self):
+        return self.head == None
+
+    def add(self, item):
+        temp = Node(item)
+        temp.set_next(self.head)
+        self.head = temp
+
+    def size(self):
+        current = self.head
+        count = 0
+        while current != None:
+            count = count + 1
+            current = current.get_next()
+        return count
+
+    def print_list(self):
+        current = self.head
+        while current != None:
+            print(current.get_data(), end=" ")
+            current = current.get_next()
+        print()
+
+    def search(self, item):
+        current = self.head
+        while current != None:
+            if current.get_data() == item:
+                return True
+            current = current.get_next()
+        return False
+
+
+# Create list and add 6 numbers
+my_list = UnorderedList()
+my_list.add(21)
+my_list.add(35)
+my_list.add(40)
+my_list.add(50)
+my_list.add(15)
+my_list.add(8)
+
+print("Creating a linked list containing the following numbers: 21, 35, 40, 50, 15, 8")
+print("Displaying the contents of the list using the print_list() function")
+my_list.print_list()
+print("Testing the is_empty() function")
+print(my_list.is_empty())
+print("Testing the size() function")
+print(my_list.size())
+
+# Search tests
+num = int(input("Please enter a number to search for in the list: "))
+print(my_list.search(num))
+
+
+Expected output:
+
+Creating a linked list containing the following numbers: 21, 35, 40, 50, 15, 8
+Displaying the contents of the list using the print_list() function
+8 15 50 40 35 21
+Testing the is_empty() function
+False
+Testing the size() function
+6
+
+Please enter a number to search for in the list: 28
+False
+
+Please enter a number to search for in the list: 50
+True
+
+Note: add() inserts at the head, so the printed order is
+the reverse of the insertion order.
+
+
+------------------------------------------------------------
+SECTION 6 – Sorting
+Question 6
+(Replace 21405678 with YOUR student ID)
+------------------------------------------------------------
+
+Student ID: 21405678
+List: [2, 1, 4, 0, 5, 6, 7, 8]
+
+
+----- Bubble Sort -----
+
+def bubble_sort(arr):
+    n = len(arr)
+    for pass_num in range(1, n):
+        for i in range(n - pass_num):
+            if arr[i] > arr[i + 1]:
+                arr[i], arr[i + 1] = arr[i + 1], arr[i]
+        print("After pass", pass_num, ":", arr)
+
+data = [2, 1, 4, 0, 5, 6, 7, 8]
+print("Initial:", data)
+bubble_sort(data)
+
+
+Pass-by-pass (example ID 21405678):
+
+Initial:          [2, 1, 4, 0, 5, 6, 7, 8]
+After pass 1:     [1, 2, 0, 4, 5, 6, 7, 8]
+After pass 2:     [1, 0, 2, 4, 5, 6, 7, 8]
+After pass 3:     [0, 1, 2, 4, 5, 6, 7, 8]
+After pass 4:     [0, 1, 2, 4, 5, 6, 7, 8]   (already sorted)
+
+Final: [0, 1, 2, 4, 5, 6, 7, 8]
+
+
+----- Quick Sort -----
+
+def quick_sort(arr):
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[-1]
+    left = [x for x in arr[:-1] if x <= pivot]
+    right = [x for x in arr[:-1] if x > pivot]
+    return quick_sort(left) + [pivot] + quick_sort(right)
+
+# For the logbook, show partitions / list after each pass:
+
+Initial list: [2, 1, 4, 0, 5, 6, 7, 8]
+
+Using last element as pivot:
+
+Pass 1: pivot = 8
+  left = [2, 1, 4, 0, 5, 6, 7], pivot = 8, right = []
+  list after partition: [2, 1, 4, 0, 5, 6, 7, 8]
+
+Pass 2: pivot = 7
+  left = [2, 1, 4, 0, 5, 6], pivot = 7, right = []
+  list after partition: [2, 1, 4, 0, 5, 6, 7, 8]
+
+Pass 3: pivot = 6
+  left = [2, 1, 4, 0, 5], pivot = 6, right = []
+  list after partition: [2, 1, 4, 0, 5, 6, 7, 8]
+
+Pass 4: pivot = 5
+  left = [2, 1, 4, 0], pivot = 5, right = []
+  list after partition: [2, 1, 4, 0, 5, 6, 7, 8]
+
+Pass 5: pivot = 0
+  left = [], pivot = 0, right = [2, 1, 4]
+  list after partition: [0, 2, 1, 4, 5, 6, 7, 8]
+  (or depending on implementation: [0, 1, 4, 2, 5, 6, 7, 8])
+
+Continue until sorted:
+
+Final: [0, 1, 2, 4, 5, 6, 7, 8]
+
+
+END OF ASSIGNMENT 5
